@@ -31,6 +31,7 @@ class LLMInfer(object):
         self.sampling_params = SamplingParams(
         temperature=0.0, max_tokens=1024, top_p=0.9
         )
+        self.tokenizer = self.initialize_tokenizer(model_path)
         self.llm = LLM(model=model_path, dtype="float16", trust_remote_code=True, max_model_len=max_model_len, tensor_parallel_size=tensor_parallel_size,
                 gpu_memory_utilization=0.9)
 
@@ -47,6 +48,11 @@ class LLMInfer(object):
         formatted_prompt += "<|im_start|>assistant\n"
 
         return formatted_prompt
+
+    def initialize_tokenizer(self, model_path):
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+        return tokenizer
 
     def inference(self, system_prompt, user_prompt):
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
