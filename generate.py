@@ -131,24 +131,38 @@ def generate_singal(args, model_name, test_case):
         }
         model_inference.write_result(result_to_write, model_name, result_path)
 
-def generate_results(args, model_name, test_case, completed_id_set):
-    with ThreadPoolExecutor(max_workers = args.num_threads) as executor:
-        futures = []
-        for test_case in test_cases_total:
-            if test_case["id"] not in completed_id_set:
-                future = executor.submit(generate_singal, args, model_name, test_case)
-                futures.append(future)
+#FIXME: Multi-threading is not working at the moment
+# def generate_results(args, model_name, test_cases_total, completed_id_set):
+#     with ThreadPoolExecutor(max_workers = args.num_threads) as executor:
+#         futures = []
+#         for test_case in test_cases_total:
+#             if test_case["id"] not in completed_id_set:
+#                 future = executor.submit(generate_singal, args, model_name, test_case)
+#                 futures.append(future)
 
-        with tqdm(total=len(futures), desc="Processing Tasks", leave=True) as pbar:
-            for future in as_completed(futures):
-                try:
-                    result = future.result()  # Catch exceptions in tasks
-                    pbar.update(1)
-                except Exception as e:
-                    print(f"Task raised an exception: {e}")
-                    # You can choose whether to continue executing tasks after catching an exception, or to terminate the program
-                    raise
-        print("All tasks have been completed.")
+#         with tqdm(total=len(futures), desc="Processing Tasks", leave=True) as pbar:
+#             for future in as_completed(futures):
+#                 try:
+#                     result = future.result()  # Catch exceptions in tasks
+#                     pbar.update(1)
+#                 except Exception as e:
+#                     print(f"Task raised an exception: {e}")
+#                     # You can choose whether to continue executing tasks after catching an exception, or to terminate the program
+#                     raise
+#         print("All tasks have been completed.")
+
+
+def generate_results(args, model_name, test_cases_total, completed_id_set):
+    remaining_tasks = [test_case for test_case in test_cases_total if test_case["id"] not in completed_id_set]
+
+    for test_case in tqdm(remaining_tasks, desc="Processing Tasks", leave=True):
+        try:
+            generate_singal(args, model_name, test_case)
+        except Exception as e:
+            print(f"Task raised an exception: {e}")
+            raise  # Reraise if you want to stop execution on error
+
+    print("All tasks have been completed.")
 
 
 
